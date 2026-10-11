@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GBA Studio & Emulator Runner - Modded Cartridges</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090c15;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(99, 102, 241, 0.25);
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.4);
+      --gba-purple: #483d8b;
+      --mario-red: #ef4444;
+      --pokemon-green: #10b981;
+      --spidey-cyan: #06b6d4;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090c15 70%);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(9, 12, 21, 0.8);
+      backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .badge-gba {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.65rem;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .title-group h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .title-group p {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: #4f46e5;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 2rem;
+    }
+
+    /* Cartridge Library Column */
+    .library-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cartridge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .cartridge-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.1rem;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cartridge-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: transparent;
+      transition: background 0.2s ease;
+    }
+
+    .cartridge-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .cartridge-card.active {
+      border-color: var(--accent);
+      background: rgba(30, 27, 75, 0.7);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .cartridge-card.active::before {
+      background: var(--accent);
+    }
+
+    .cartridge-card.modded-pkmn::before {
+      background: var(--pokemon-green);
+    }
+
+    .cartridge-card.modded-mario::before {
+      background: var(--mario-red);
+    }
+
+    .cartridge-card.modded-spidey::before {
+      background: var(--spidey-cyan);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .card-tag {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-modded {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .tag-mario {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .tag-retail {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-meta {
+      font-size: 0.75rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Emulator Screen Column */
+    .screen-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .emulator-chassis {
+      background: #111422;
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .emulator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .led-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    .now-playing-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .screen-container {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #game {
+      width: 100%;
+      height: 100%;
+    }
+
+    .placeholder-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .placeholder-icon {
+      font-size: 3rem;
+    }
+
+    .placeholder-text {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    /* Controls Guide */
+    .controls-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .key-cap {
+      background: #1e293b;
+      border: 1px solid #475569;
+      box-shadow: 0 3px 0 #334155;
+      padding: 0.25rem 0.55rem;
+      border-radius: 5px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .control-action {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Feature highlights */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .feature-box {
+      background: rgba(18, 24, 38, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 0.85rem;
+    }
+
+    .feature-box h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+      color: #38bdf8;
+    }
+
+    .feature-box p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="badge-gba">GBA 32-BIT</span>
+      <div class="title-group">
+        <h1>GAME BOY ADVANCE ENGINE RUNNER</h1>
+        <p>Direct WebAssembly Hardware Simulator & Binary Cartridge Player</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="file-input-wrapper">
+        <button class="btn btn-secondary">📁 Load Custom .gba ROM</button>
+        <input type="file" id="romFileInput" accept=".gba,.bin">
+      </div>
+      <a href="/roms/LeafGreen_Modded.gba" download class="btn btn-primary">⬇️ Download Modded ROM</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: Cartridge Library -->
+    <section class="library-panel">
+      <div class="section-title">🎮 Ready Cartridges</div>
+
+      <div class="cartridge-list">
+        <!-- LeafGreen Crossover Mod -->
+        <div class="cartridge-card modded-pkmn active" onclick="loadCartridge('roms/LeafGreen_Modded.gba', 'PKMN LeafGreen: Mario & Spidey Mod', 'LeafGreen_Modded')">
+          <div class="card-top">
+            <span class="card-title">Pokémon LeafGreen Mod</span>
+            <span class="card-tag tag-modded">⭐ Crossover</span>
+          </div>
+          <p class="card-desc">Features Mario (Fire/Fight), Spider-Man (Bug/Fight), Bowser (Dragon/Fire), Pikachu-EX, Route 1 Wild Encounters & Oak Dialogue!</p>
+          <div class="card-meta">
+            <span>Size: 16.0 MB</span>
+            <span>Offset: 0x245F37 &bull; 0x3C8D1C</span>
+          </div>
+        </div>
+
+        <!-- Super Mario Bros Mod -->
+        <div class="cartridge-card modded-mario" onclick="loadCartridge('roms/Super_Mario_Modded.gba', 'Classic NES: Super Mario (Infinite Lives)', 'Super_Mario_Modded')">
+          <div class="card-top">
+            <span class="card-title">Super Mario Bros GBA Mod</span>
+            <span class="card-tag tag-mario">🔥 Infinite Lives</span>
+          </div>
+          <p class="card-desc">NES PRG ROM with SUPER HUD tile patch and machine code NOP patch on DEC $075A for infinite lives.</p>
+          <div class="card-meta">
+            <span>Size: 4.0 MB</span>
+            <span>Patch: NOP NOP NOP at 0x98DA1</span>
+          </div>
+        </div>
+
+        <!-- Spider-Man 2-in-1 -->
+        <div class="cartridge-card modded-spidey" onclick="loadCartridge('roms/SpiderMan_2in1.gba', 'Spider-Man & Spider-Man 2 (2-in-1)', 'SpiderMan_2in1')">
+          <div class="card-top">
+            <span class="card-title">Spider-Man & Spidey 2</span>
+            <span class="card-tag tag-retail">Official GBA</span>
+          </div>
+          <p class="card-desc">Direct 32MB action-adventure dual-cartridge release for Game Boy Advance.</p>
+          <div class="card-meta">
+            <span>Size: 32.0 MB</span>
+            <span>Cartridge Code: 2099</span>
+          </div>
+        </div>
+
+        <!-- LeafGreen Original -->
+        <div class="cartridge-card" onclick="loadCartridge('roms/LeafGreen_Original.gba', 'Pokémon LeafGreen (Original v1.1)', 'LeafGreen_Original')">
+          <div class="card-top">
+            <span class="card-title">Pokémon LeafGreen (USA v1.1)</span>
+            <span class="card-tag tag-retail">Clean ROM</span>
+          </div>
+          <p class="card-desc">Vanilla untouched 16MB LeafGreen ROM for side-by-side comparison with the mod.</p>
+          <div class="card-meta">
+            <span>Size: 16.0 MB</span>
+            <span>Cartridge Code: BPGE</span>
+          </div>
+        </div>
+
+        <!-- Mario Original -->
+        <div class="cartridge-card" onclick="loadCartridge('roms/Super_Mario_Original.gba', 'Super Mario Bros (Original GBA)', 'Super_Mario_Original')">
+          <div class="card-top">
+            <span class="card-title">Super Mario Bros (Original)</span>
+            <span class="card-tag tag-retail">Clean ROM</span>
+          </div>
+          <p class="card-desc">Original Classic NES Series Mario ROM with 3 lives standard challenge.</p>
+          <div class="card-meta">
+            <span>Size: 4.0 MB</span>
+            <span>Cartridge Code: FSME</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-box">
+          <h4>60 FPS WASM</h4>
+          <p>Cycles accurate ARM7TDMI 16.78 MHz execution.</p>
+        </div>
+        <div class="feature-box">
+          <h4>Direct Audio</h4>
+          <p>Dual Direct Sound channels + 4 PSG channels.</p>
+        </div>
+        <div class="feature-box">
+          <h4>Save States</h4>
+          <p>Instant SRAM, Flash 128K, and EEPROM saving.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Emulator Chassis & Display -->
+    <section class="screen-panel">
+      <div class="emulator-chassis">
+        <div class="emulator-header">
+          <div class="now-playing">
+            <div class="led-dot"></div>
+            <div class="now-playing-title" id="currentRomLabel">PKMN LeafGreen: Mario & Spidey Mod</div>
+          </div>
+          <div style="font-size: 0.8rem; color: #94a3b8; font-family: monospace;" id="fpsBadge">
+            CORE: mGBA / VBA-M
+          </div>
+        </div>
+
+        <!-- Emulator Canvas -->
+        <div class="screen-container" id="screenWrapper">
+          <div id="game"></div>
+        </div>
+      </div>
+
+      <!-- Controls Guide -->
+      <div class="controls-panel">
+        <div class="control-item">
+          <span class="key-cap">&uarr; &darr; &larr; &rarr;</span>
+          <span class="control-label"><strong class="control-action">D-Pad</strong> Movement</span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">Z</span>
+          <span class="control-label"><strong class="control-action">A Button</strong> (Confirm / Jump)</span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">X</span>
+          <span class="control-label"><strong class="control-action">B Button</strong> (Cancel / Run)</span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">A / S</span>
+          <span class="control-label"><strong class="control-action">L / R</strong> Shoulders</span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">Enter</span>
+          <span class="control-label"><strong class="control-action">Start</strong> (Menu / Pause)</span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">Shift</span>
+          <span class="control-label"><strong class="control-action">Select</strong></span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">Space</span>
+          <span class="control-label"><strong class="control-action">Fast-Forward</strong> (Turbo)</span>
+        </div>
+        <div class="control-item">
+          <span class="key-cap">🎮</span>
+          <span class="control-label"><strong class="control-action">Gamepad</strong> Auto-detected</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- EmulatorJS Script Loader -->
+  <script>
+    let currentRomUrl = 'roms/LeafGreen_Modded.gba';
+
+    function initEmulator(romUrl) {
+      const container = document.getElementById('screenWrapper');
+      container.innerHTML = '<div id="game"></div>';
+
+      // Set global EmulatorJS configuration
+      window.EJS_player = '#game';
+      window.EJS_core = 'gba';
+      window.EJS_gameUrl = romUrl;
+      window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+      window.EJS_startOnLoaded = true;
+      window.EJS_color = '#6366f1';
+      window.EJS_language = 'en';
+
+      // Load loader script
+      const script = document.createElement('script');
+      script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+      document.body.appendChild(script);
+    }
+
+    function loadCartridge(url, title, cardId) {
+      document.getElementById('currentRomLabel').innerText = title;
+      currentRomUrl = url;
+
+      // Update active card styling
+      document.querySelectorAll('.cartridge-card').forEach(c => c.classList.remove('active'));
+      const activeEl = event ? event.currentTarget : document.querySelector('.cartridge-card');
+      if (activeEl) activeEl.classList.add('active');
+
+      // Reload emulator with selected ROM
+      initEmulator(url);
+    }
+
+    // Custom ROM file input handler
+    document.getElementById('romFileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const blobUrl = URL.createObjectURL(file);
+      document.getElementById('currentRomLabel').innerText = `Custom ROM: ${file.name}`;
+      document.querySelectorAll('.cartridge-card').forEach(c => c.classList.remove('active'));
+
+      initEmulator(blobUrl);
+    });
+
+    // Start with default modded ROM
+    window.addEventListener('DOMContentLoaded', () => {
+      initEmulator('roms/LeafGreen_Modded.gba');
+    });
+  </script>
+</body>
+</html>

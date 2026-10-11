@@ -1,0 +1,17 @@
+# GBA ROMs & Binary Cartridges (Protected / Large Binaries)
+*.gba
+*.bin
+roms/*.gba
+roms/*.bin
+!roms/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+
+# OS files
+Thumbs.db
+.DS_Store
